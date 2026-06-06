@@ -1,0 +1,41 @@
+version: '3.9'
+services:
+  maintenance-service:
+    build: .
+    ports:
+      - "8083:8083"
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/maintenance_db
+      DB_USER: postgres
+      DB_PASS: postgres
+      KAFKA_BOOTSTRAP: kafka:9092
+      SPRING_PROFILES_ACTIVE: dev
+    depends_on:
+      - postgres
+      - kafka
+
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: maintenance_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  kafka:
+    image: confluentinc/cp-kafka:7.6.0
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qk
+    ports:
+      - "9092:9092"
+
+volumes:
+  postgres_data:
