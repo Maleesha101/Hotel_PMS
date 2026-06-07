@@ -19,6 +19,10 @@ public class UpdateMaintenanceRequest {
 
     private BigDecimal estimatedCost;
 
+    private BigDecimal actualCost;
+
+    private String completionNotes;
+
     private List<@Size(max = 255) String> partsUsed;
 
     // Getters and setters
@@ -30,6 +34,10 @@ public class UpdateMaintenanceRequest {
     public void setPriority(Priority priority) { this.priority = priority; }
     public BigDecimal getEstimatedCost() { return estimatedCost; }
     public void setEstimatedCost(BigDecimal estimatedCost) { this.estimatedCost = estimatedCost; }
+    public BigDecimal getActualCost() { return actualCost; }
+    public void setActualCost(BigDecimal actualCost) { this.actualCost = actualCost; }
+    public String getCompletionNotes() { return completionNotes; }
+    public void setCompletionNotes(String completionNotes) { this.completionNotes = completionNotes; }
     public List<String> getPartsUsed() { return partsUsed; }
     public void setPartsUsed(List<String> partsUsed) { this.partsUsed = partsUsed; }
 }
