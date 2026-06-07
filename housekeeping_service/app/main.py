@@ -35,7 +35,7 @@ async def lifespan(app: FastAPI):
     await asyncio.gather(consumer_task, return_exceptions=True)
 
 app = FastAPI(
-    title="Hotel PMS — Housekeeping & Inventory Service",
+    title="Hotel PMS - Housekeeping & Inventory Service",
     description="Manages room status, housekeeping tasks, supplies, inventory, and damage reports.",
     version="0.1.0",
     lifespan=lifespan,
