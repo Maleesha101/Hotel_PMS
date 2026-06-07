@@ -43,12 +43,12 @@ app = FastAPI(
     openapi_url="/v3/api-docs",
 )
 
-# Apply custom OpenAPI (JWT Bearer auth)
-custom_openapi(app)
-
 # Include routers under /api/v1 prefix
 app.include_router(room_status_router, prefix="/api/v1", tags=["Room Status"])
 app.include_router(tasks_router,       prefix="/api/v1", tags=["Housekeeping Tasks"])
 app.include_router(supplies_router,    prefix="/api/v1", tags=["Room Supply Standards"])
 app.include_router(inventory_router,   prefix="/api/v1", tags=["Inventory"])
 app.include_router(damage_router,      prefix="/api/v1", tags=["Damage Reports"])
+
+# Apply custom OpenAPI (JWT Bearer auth) after routes are included
+custom_openapi(app)
