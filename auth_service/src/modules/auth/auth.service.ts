@@ -3,7 +3,7 @@ import { redis } from '../../config/redis';
 import { env } from '../../config/env';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
-import { signAccessToken, signRefreshToken, TokenPayload } from '../../shared/jwt';
+import { signAccessToken, signRefreshToken, verifyRefreshToken, TokenPayload } from '../../shared/jwt';
 import { UnauthorizedError, ConflictError, ForbiddenError, NotFoundError } from '../../shared/errors';
 import { AuditAction } from '../../shared/enums';
 import { AuditLogCreateDto } from '../audit/audit.types';
@@ -110,7 +110,9 @@ export class AuthService {
     }
     // Rotate token
     await prisma.refreshToken.update({ where: { id: existing.id }, data: { revokedAt: new Date() } });
-    const newAccess = signAccessToken({ sub: userId, email: existing.user?.email ?? '', role: existing.user?.role as any, name: existing.user?.name ?? '' });
+    const userRecord = await prisma.user.findUnique({ where: { id: userId } });
+    if (!userRecord) throw new NotFoundError('User not found');
+    const newAccess = signAccessToken({ sub: userId, email: userRecord.email, role: userRecord.role as any, name: userRecord.name });
     const newRefresh = signRefreshToken(userId);
     const newHash = this.hashRefreshToken(newRefresh);
     await prisma.refreshToken.create({
