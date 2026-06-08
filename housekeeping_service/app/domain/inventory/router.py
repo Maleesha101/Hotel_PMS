@@ -12,6 +12,7 @@ from app.database import get_db
 from app.config import settings
 from app.messaging.producer import publish
 
+from app.shared.enums import TransactionType
 from app.domain.inventory import schemas as inv_schemas
 from app.domain.inventory import repository as inv_repo
 from app.domain.inventory.model import InventoryItemModel
@@ -21,8 +22,8 @@ admin_dep = Depends(require_roles("Admin"))
 
 @router.post("/inventory", response_model=ApiResponse)
 async def create_inventory_item(payload: inv_schemas.CreateInventoryItemRequest, db=Depends(get_db), _: None = admin_dep):
-    item = await inv_repo.create_item(db=db, **payload.dict())
-    return ApiResponse(status="success", data=inv_schemas.InventoryItemResponse.from_orm(item))
+    item = await inv_repo.create_item(db=db, **payload.model_dump())
+    return ApiResponse(status="success", data=inv_schemas.InventoryItemResponse.model_validate(item))
 
 @router.get("/inventory", response_model=ApiResponse)
 async def list_inventory(
@@ -42,7 +43,7 @@ async def list_inventory(
         page=page,
         size=size,
     )
-    data = [inv_schemas.InventoryItemResponse.from_orm(i) for i in items]
+    data = [inv_schemas.InventoryItemResponse.model_validate(i) for i in items]
     return ApiResponse(status="success", data=data)
 
 @router.get("/inventory/{item_id}", response_model=ApiResponse)
@@ -50,12 +51,12 @@ async def get_inventory_item(item_id: str, db=Depends(get_db), _: None = admin_d
     item = await inv_repo.get_item(db=db, item_id=item_id)
     if not item:
         raise HTTPException(status_code=404, detail="Item not found")
-    return ApiResponse(status="success", data=inv_schemas.InventoryItemResponse.from_orm(item))
+    return ApiResponse(status="success", data=inv_schemas.InventoryItemResponse.model_validate(item))
 
 @router.patch("/inventory/{item_id}", response_model=ApiResponse)
 async def update_inventory_item(item_id: str, payload: inv_schemas.UpdateInventoryItemRequest, db=Depends(get_db), _: None = admin_dep):
-    item = await inv_repo.update_item(db=db, item_id=item_id, **payload.dict(exclude_unset=True))
-    return ApiResponse(status="success", data=inv_schemas.InventoryItemResponse.from_orm(item))
+    item = await inv_repo.update_item(db=db, item_id=item_id, **payload.model_dump(exclude_unset=True))
+    return ApiResponse(status="success", data=inv_schemas.InventoryItemResponse.model_validate(item))
 
 @router.post("/inventory/{item_id}/restock", response_model=ApiResponse)
 async def restock_item(item_id: str, payload: inv_schemas.TransactionRequest, db=Depends(get_db), _: None = admin_dep):
@@ -70,7 +71,7 @@ async def restock_item(item_id: str, payload: inv_schemas.TransactionRequest, db
         task_id=payload.task_id,
     )
     await publish(tx.__dict__, settings.INVENTORY_TX_TOPIC)
-    return ApiResponse(status="success", data=inv_schemas.InventoryTransactionResponse.from_orm(tx))
+    return ApiResponse(status="success", data=inv_schemas.InventoryTransactionResponse.model_validate(tx))
 
 @router.post("/inventory/{item_id}/issue", response_model=ApiResponse)
 async def issue_item(item_id: str, payload: inv_schemas.TransactionRequest, db=Depends(get_db), _: None = admin_dep):
@@ -85,7 +86,7 @@ async def issue_item(item_id: str, payload: inv_schemas.TransactionRequest, db=D
         task_id=payload.task_id,
     )
     await publish(tx.__dict__, settings.INVENTORY_TX_TOPIC)
-    return ApiResponse(status="success", data=inv_schemas.InventoryTransactionResponse.from_orm(tx))
+    return ApiResponse(status="success", data=inv_schemas.InventoryTransactionResponse.model_validate(tx))
 
 @router.get("/inventory/{item_id}/transactions", response_model=ApiResponse)
 async def get_item_transactions(
@@ -96,13 +97,13 @@ async def get_item_transactions(
     _: None = admin_dep,
 ):
     txs = await inv_repo.list_transactions(db=db, item_id=item_id, page=page, size=size)
-    data = [inv_schemas.InventoryTransactionResponse.from_orm(t) for t in txs]
+    data = [inv_schemas.InventoryTransactionResponse.model_validate(t) for t in txs]
     return ApiResponse(status="success", data=data)
 
 @router.get("/inventory/low-stock", response_model=ApiResponse)
 async def low_stock_items(db=Depends(get_db), _: None = admin_dep):
     items = await inv_repo.low_stock_items(db=db)
-    data = [inv_schemas.InventoryItemResponse.from_orm(i) for i in items]
+    data = [inv_schemas.InventoryItemResponse.model_validate(i) for i in items]
     return ApiResponse(status="success", data=data)
 
 @router.get("/inventory/summary", response_model=ApiResponse)

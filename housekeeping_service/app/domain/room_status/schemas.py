@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Optional, List, Dict
 from datetime import datetime
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from app.shared.enums import RoomStatus
 
 class RoomStatusResponse(BaseModel):
@@ -20,6 +20,8 @@ class RoomStatusResponse(BaseModel):
     last_checkout: Optional[datetime] = Field(None, description="Timestamp of last checkout")
     created_at: datetime = Field(..., description="Record creation timestamp")
     updated_at: datetime = Field(..., description="Record last update timestamp")
+
+    model_config = ConfigDict(from_attributes=True)
 
 class UpdateRoomStatusRequest(BaseModel):
     status: RoomStatus = Field(..., description="New room status", example="CLEAN")

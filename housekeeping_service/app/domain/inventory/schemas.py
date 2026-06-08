@@ -9,7 +9,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Optional, List, Dict
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from app.shared.enums import InventoryCategory, TransactionType
 
 class InventoryItemResponse(BaseModel):
@@ -29,8 +29,7 @@ class InventoryItemResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 class CreateInventoryItemRequest(BaseModel):
     name: str = Field(..., description="Item name")
@@ -77,8 +76,7 @@ class InventoryTransactionResponse(BaseModel):
     notes: Optional[str]
     created_at: datetime
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 class InventorySummaryResponse(BaseModel):
     category: str

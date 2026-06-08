@@ -33,7 +33,7 @@ def get_current_user(token: str = Depends(oauth2_scheme)) -> TokenPayload:
         )
     try:
         payload = jwt.decode(token, settings.JWT_PUBLIC_KEY, algorithms=["RS256"])
-        token_data = TokenPayload(**payload)
+        token_data = TokenPayload.model_validate(payload)
     except (JWTError, ValidationError) as exc:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
