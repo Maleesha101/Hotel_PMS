@@ -16,6 +16,11 @@ class Settings(BaseSettings):
     # Kafka
     KAFKA_BOOTSTRAP: str = "localhost:9093"
     KAFKA_CONSUMER_GROUP: str = "housekeeping-service"
+    # New topic constants
+    TASK_COMPLETED_TOPIC: str = "hotel:task-completed"
+    INVENTORY_TX_TOPIC: str = "hotel:inventory-transaction"
+    DAMAGE_MAINTENANCE_TOPIC: str = "hotel:damage-to-maintenance"
+    DAMAGE_INVOICE_TOPIC: str = "hotel:damage-to-invoice"
 
     # JWT
     JWT_PUBLIC_KEY: str = ""
