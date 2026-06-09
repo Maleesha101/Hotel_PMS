@@ -4,11 +4,12 @@ This sets up the FastAPI app, registers routers (currently stubs), and configure
 startup/shutdown lifecycles for database, Kafka producer/consumer, and scheduler.
 """
 
+import asyncio
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from app.config import settings
 from app.database import engine
-from app.openapi import custom_openapi
+from app.messaging.consumer import start_consumer, stop_consumer
 
 # Import placeholder routers (they will be implemented later)
 from app.domain.room_status.router import router as room_status_router
@@ -23,22 +24,35 @@ async def lifespan(app: FastAPI):
     # For now we simply ensure the engine can be created.
     async with engine.begin() as conn:
         await conn.run_sync(lambda _: None)  # No-op to validate connection
-    # TODO: init_producer(), start_consumer(), start_scheduler()
+    
+    # Start consumer in background so it doesn't block the web server startup
+    consumer_task = asyncio.create_task(start_consumer())
     yield
-    # Shutdown actions: close connections, stop background tasks.
-    # TODO: close producer/consumer, shutdown scheduler.
+    # Shutdown logic
+    await stop_consumer()
+    consumer_task.cancel()
+    await asyncio.gather(consumer_task, return_exceptions=True)
 
 app = FastAPI(
-    title="Hotel PMS — Housekeeping & Inventory Service",
+    title="Hotel PMS - Housekeeping & Inventory Service",
     description="Manages room status, housekeeping tasks, supplies, inventory, and damage reports.",
     version="0.1.0",
     lifespan=lifespan,
     docs_url="/swagger-ui.html",
-    openapi_url="/v3/api-docs",
+    openapi_url="/v3/api-docs", # This is the endpoint for the OpenAPI JSON
+    openapi_extra={
+        "components": {
+            "securitySchemes": {
+                "BearerAuth": {
+                    "type": "http",
+                    "scheme": "bearer",
+                    "bearerFormat": "JWT",
+                }
+            }
+        },
+        "security": [{"BearerAuth": []}],
+    }
 )
-
-# Apply custom OpenAPI (JWT Bearer auth)
-custom_openapi(app)
 
 # Include routers under /api/v1 prefix
 app.include_router(room_status_router, prefix="/api/v1", tags=["Room Status"])

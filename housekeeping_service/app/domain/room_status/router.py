@@ -99,6 +99,7 @@ async def bulk_update_status(
             await _publish_status_change(item.room_id, item.status.value)
             updated.append(rs_schemas.RoomStatusResponse.model_validate(room))
         except Exception:
+            await db.rollback()
             continue
     return ApiResponse(status="success", data={"updated": len(updated)})
 
@@ -106,5 +107,5 @@ async def bulk_update_status(
 async def dashboard(db: AsyncSession = Depends(get_db), _: None = admin_dep):
     counts = await rs_repo.count_by_status(db=db)
     total = sum(counts.values())
-    dashboard = rs_schemas.DashboardResponse(counts=counts, total_rooms=total)
-    return ApiResponse(status="success", data=dashboard)
+    result = rs_schemas.DashboardResponse(counts=counts, total_rooms=total)
+    return ApiResponse(status="success", data=result)

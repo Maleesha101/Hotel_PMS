@@ -27,7 +27,7 @@ async def _publish_dead_letter(payload: Any) -> None:
 async def _process_message(msg: ConsumerRecord) -> None:
     payload = json.loads(msg.value.decode())
     if msg.topic == "hotel.booking.checkout":
-        await create_task_from_checkout(payload)
+        await create_task_from_checkout(room_id=payload.get("room_id"))
     elif msg.topic == "hotel.booking.checkin":
         await room_patch_status(
             room_id=payload["room_id"],
