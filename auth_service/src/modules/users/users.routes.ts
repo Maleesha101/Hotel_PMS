@@ -4,6 +4,7 @@ import { authenticate } from '../../middleware/authenticate';
 import { authorize } from '../../middleware/authorize';
 import { validate } from '../../middleware/validate';
 import { createUserSchema, updateUserSchema, listUsersSchema } from './users.schema';
+import { Role } from '../../shared/enums';
 
 const router = Router();
 
@@ -33,7 +34,7 @@ const router = Router();
  *       403:
  *         description: Forbidden
  */
-router.post('/', authenticate, authorize('ADMIN'), validate(createUserSchema), createUser);
+router.post('/', authenticate, authorize(Role.ADMIN), validate(createUserSchema), createUser);
 
 /**
  * @swagger
@@ -70,7 +71,7 @@ router.post('/', authenticate, authorize('ADMIN'), validate(createUserSchema), c
  *       200:
  *         description: List of users
  */
-router.get('/', authenticate, authorize('ADMIN'), validate(listUsersSchema), listUsers);
+router.get('/', authenticate, authorize(Role.ADMIN), validate(listUsersSchema), listUsers);
 
 /**
  * @swagger
@@ -90,7 +91,7 @@ router.get('/', authenticate, authorize('ADMIN'), validate(listUsersSchema), lis
  *       200:
  *         description: User profile
  */
-router.get('/:id', authenticate, authorize('ADMIN'), getUser);
+router.get('/:id', authenticate, authorize(Role.ADMIN), getUser);
 
 /**
  * @swagger
@@ -115,7 +116,7 @@ router.get('/:id', authenticate, authorize('ADMIN'), getUser);
  *       200:
  *         description: User updated
  */
-router.patch('/:id', authenticate, authorize('ADMIN'), validate(updateUserSchema), updateUser);
+router.patch('/:id', authenticate, authorize(Role.ADMIN), validate(updateUserSchema), updateUser);
 
 /**
  * @swagger
@@ -135,7 +136,7 @@ router.patch('/:id', authenticate, authorize('ADMIN'), validate(updateUserSchema
  *       200:
  *         description: User deactivated
  */
-router.delete('/:id', authenticate, authorize('ADMIN'), deactivateUser);
+router.delete('/:id', authenticate, authorize(Role.ADMIN), deactivateUser);
 
 /**
  * @swagger
@@ -155,7 +156,7 @@ router.delete('/:id', authenticate, authorize('ADMIN'), deactivateUser);
  *       200:
  *         description: User suspended
  */
-router.post('/:id/suspend', authenticate, authorize('ADMIN'), suspendUser);
+router.post('/:id/suspend', authenticate, authorize(Role.ADMIN), suspendUser);
 
 /**
  * @swagger
@@ -175,6 +176,6 @@ router.post('/:id/suspend', authenticate, authorize('ADMIN'), suspendUser);
  *       200:
  *         description: User activated
  */
-router.post('/:id/activate', authenticate, authorize('ADMIN'), activateUser);
+router.post('/:id/activate', authenticate, authorize(Role.ADMIN), activateUser);
 
 export default router;

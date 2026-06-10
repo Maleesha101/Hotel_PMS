@@ -61,7 +61,11 @@ Issues RS256-signed JWTs consumed by all downstream services:
     },
     security: [{ BearerAuth: [] }],
   },
-  apis: ['./src/modules/**/*.routes.ts'],
+  apis: [
+    process.env.NODE_ENV === 'production' || __filename.endsWith('.js')
+      ? './dist/modules/**/*.routes.js' 
+      : './src/modules/**/*.routes.ts'
+  ],
 };
 
 export const setupSwagger = (app: Express): void => {

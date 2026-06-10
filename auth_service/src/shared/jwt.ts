@@ -16,8 +16,8 @@ export interface TokenPayload {
 export const signAccessToken = (payload: Omit<TokenPayload, 'iat' | 'exp' | 'jti'>): string => {
   const jti = crypto.randomUUID();
   return jwt.sign({ ...payload, jti }, env.JWT_PRIVATE_KEY, {
-    algorithm: 'RS256',
-    expiresIn: env.JWT_ACCESS_EXPIRY,
+    algorithm: 'RS256' as jwt.Algorithm,
+    expiresIn: env.JWT_ACCESS_EXPIRY as any,
     issuer: 'hotel-pms-auth-service',
     audience: 'hotel-pms',
   });
@@ -25,8 +25,8 @@ export const signAccessToken = (payload: Omit<TokenPayload, 'iat' | 'exp' | 'jti
 
 export const signRefreshToken = (userId: string): string => {
   return jwt.sign({ sub: userId }, env.JWT_PRIVATE_KEY, {
-    algorithm: 'RS256',
-    expiresIn: env.JWT_REFRESH_EXPIRY,
+    algorithm: 'RS256' as jwt.Algorithm,
+    expiresIn: env.JWT_REFRESH_EXPIRY as any,
     issuer: 'hotel-pms-auth-service',
     audience: 'hotel-pms-refresh',
   });

@@ -5,6 +5,7 @@ import { loginRateLimiter, refreshRateLimiter } from '../../middleware/rateLimit
 import { authenticate } from '../../middleware/authenticate';
 import { authorize } from '../../middleware/authorize';
 import { loginSchema, refreshSchema, verifySchema, changePasswordSchema } from './auth.schema';
+import { Role } from '../../shared/enums';
 
 const router = Router();
 
@@ -152,6 +153,6 @@ router.post('/revoke-all-sessions', authenticate, revokeAll);
  *       200:
  *         description: Temporary password returned
  */
-router.post('/admin/reset-password/:id', authenticate, authorize('ADMIN'), adminResetPassword);
+router.post('/admin/reset-password/:id', authenticate, authorize(Role.ADMIN), adminResetPassword);
 
 export default router;

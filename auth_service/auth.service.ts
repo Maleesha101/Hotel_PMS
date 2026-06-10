@@ -4,11 +4,10 @@ import { env } from '../../config/env';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 import { signAccessToken, signRefreshToken, verifyAccessToken, verifyRefreshToken, TokenPayload } from '../../shared/jwt';
-import { UnauthorizedError, ConflictError, ForbiddenError, NotFoundError } from '../../shared/errors';
+import { UnauthorizedError, NotFoundError } from '../../shared/errors';
 import { AuditAction } from '../../shared/enums';
 import { AuditLogCreateDto } from '../audit/audit.types';
 import { LoginResponse, TokenPair, RequestMeta } from './auth.types';
-import { logger } from '../../config/logger';
 
 export class AuthService {
   private async logAudit(data: AuditLogCreateDto) {
@@ -68,7 +67,8 @@ export class AuthService {
     const value = parseInt(match[1]);
     const unit = match[2];
     const msMap: Record<string, number> = { s: 1000, m: 60000, h: 3600000, d: 86400000 };
-    return value * msMap[unit];
+    const ms = msMap[unit];
+    return ms ? value * ms : 0;
   }
 
   async logout(accessToken: string, userId: string): Promise<void> {
@@ -98,6 +98,10 @@ export class AuthService {
   async refreshTokens(rawRefreshToken: string, meta: RequestMeta): Promise<TokenPair> {
     const payload = verifyRefreshToken(rawRefreshToken);
     const userId = payload.sub;
+    if (!userId) {
+      throw new UnauthorizedError('Invalid refresh token payload');
+    }
+
     const tokenHash = this.hashRefreshToken(rawRefreshToken);
     const existing = await prisma.refreshToken.findFirst({
       where: { tokenHash, revokedAt: null, expiresAt: { gt: new Date() } },

@@ -10,7 +10,7 @@ export const loginRateLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   store: new RedisStore({
-    sendCommand: (...args: string[]) => redis.call(...args),
+    sendCommand: (...args: string[]) => redis.call(args[0], ...args.slice(1)) as Promise<any>,
   }),
 });
 
@@ -22,7 +22,7 @@ export const refreshRateLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   store: new RedisStore({
-    sendCommand: (...args: string[]) => redis.call(...args),
+    sendCommand: (...args: string[]) => redis.call(args[0], ...args.slice(1)) as Promise<any>,
   }),
 });
 
@@ -34,6 +34,6 @@ export const generalRateLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   store: new RedisStore({
-    sendCommand: (...args: string[]) => redis.call(...args),
+    sendCommand: (...args: string[]) => redis.call(args[0], ...args.slice(1)) as Promise<any>,
   }),
 });
