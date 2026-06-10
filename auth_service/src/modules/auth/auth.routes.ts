@@ -26,7 +26,8 @@ const router = Router();
  *       required: true
  *       content:
  *         application/json:
- *           schema: $ref: '#/components/schemas/LoginRequest'
+ *           schema:
+ *             $ref: '#/components/schemas/LoginRequest'
  *     responses:
  *       200:
  *         description: Login successful, returns access and refresh tokens
@@ -59,7 +60,8 @@ router.post('/logout', authenticate, logout);
  *       required: true
  *       content:
  *         application/json:
- *           schema: $ref: '#/components/schemas/RefreshRequest'
+ *           schema:
+ *             $ref: '#/components/schemas/RefreshRequest'
  *     responses:
  *       200:
  *         description: New token pair issued
@@ -78,7 +80,8 @@ router.post('/refresh', refreshRateLimiter, validate(refreshSchema), refresh);
  *       required: true
  *       content:
  *         application/json:
- *           schema: $ref: '#/components/schemas/VerifyRequest'
+ *           schema:
+ *             $ref: '#/components/schemas/VerifyRequest'
  *     responses:
  *       200:
  *         description: Token payload returned
@@ -113,7 +116,8 @@ router.get('/me', authenticate, me);
  *       required: true
  *       content:
  *         application/json:
- *           schema: $ref: '#/components/schemas/ChangePasswordRequest'
+ *           schema:
+ *             $ref: '#/components/schemas/ChangePasswordRequest'
  *     responses:
  *       200:
  *         description: Password changed

@@ -4,11 +4,13 @@ import { env } from '../../config/env';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 import { signAccessToken, signRefreshToken, verifyAccessToken, verifyRefreshToken, TokenPayload } from '../../shared/jwt';
-import { UnauthorizedError, ConflictError, ForbiddenError, NotFoundError } from '../../shared/errors';
+import { UnauthorizedError, NotFoundError } from '../../shared/errors';
 import { AuditAction } from '../../shared/enums';
 import { AuditLogCreateDto } from '../audit/audit.types';
 import { LoginResponse, TokenPair, RequestMeta } from './auth.types';
 import { logger } from '../../config/logger';
+
+const MS_MAP: Record<string, number> = { s: 1000, m: 60000, h: 3600000, d: 86400000 };
 
 export class AuthService {
   private async logAudit(data: AuditLogCreateDto) {
@@ -67,8 +69,7 @@ export class AuthService {
     if (!match) return 0;
     const value = parseInt(match[1]);
     const unit = match[2];
-    const msMap: Record<string, number> = { s: 1000, m: 60000, h: 3600000, d: 86400000 };
-    return value * msMap[unit];
+    return value * (MS_MAP[unit] || 0);
   }
 
   async logout(accessToken: string, userId: string): Promise<void> {
@@ -98,6 +99,10 @@ export class AuthService {
   async refreshTokens(rawRefreshToken: string, meta: RequestMeta): Promise<TokenPair> {
     const payload = verifyRefreshToken(rawRefreshToken);
     const userId = payload.sub;
+    if (!userId) {
+      throw new UnauthorizedError('Invalid refresh token payload');
+    }
+
     const tokenHash = this.hashRefreshToken(rawRefreshToken);
     const existing = await prisma.refreshToken.findFirst({
       where: { tokenHash, revokedAt: null, expiresAt: { gt: new Date() } },
@@ -150,7 +155,7 @@ export class AuthService {
   }
 
   async adminResetPassword(targetUserId: string, adminId: string): Promise<{ temporaryPassword: string }> {
-    const tempPassword = crypto.randomBytes(8).toString('base64'); // 12‑char base64
+    const tempPassword = crypto.randomBytes(6).toString('hex').toUpperCase(); // 12-char Hex string
     const hash = await bcrypt.hash(tempPassword, env.BCRYPT_ROUNDS);
     await prisma.user.update({ where: { id: targetUserId }, data: { passwordHash: hash } });
     await this.logAudit({ userId: adminId, action: AuditAction.PASSWORD_RESET_REQUESTED, details: { targetUserId } });

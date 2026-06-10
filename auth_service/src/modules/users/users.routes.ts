@@ -27,7 +27,8 @@ const router = Router();
  *       required: true
  *       content:
  *         application/json:
- *           schema: $ref: '#/components/schemas/CreateUserRequest'
+ *           schema:
+ *             $ref: '#/components/schemas/CreateUserRequest'
  *     responses:
  *       201:
  *         description: User created
@@ -111,7 +112,8 @@ router.get('/:id', authenticate, authorize(Role.ADMIN), getUser);
  *       required: true
  *       content:
  *         application/json:
- *           schema: $ref: '#/components/schemas/UpdateUserRequest'
+ *           schema:
+ *             $ref: '#/components/schemas/UpdateUserRequest'
  *     responses:
  *       200:
  *         description: User updated

@@ -20,8 +20,8 @@ RUN npm prune --omit=dev
 FROM node:20-alpine
 WORKDIR /app
 
-# Install curl for the docker-compose healthcheck
-RUN apk add --no-cache curl
+# Install curl for healthcheck and openssl compatibility for Prisma
+RUN apk add --no-cache curl libssl1.1 --repository=http://dl-cdn.alpinelinux.org/alpine/v3.16/main
 
 # Copy only the compiled output and production dependencies
 COPY --from=builder /app/dist ./dist
