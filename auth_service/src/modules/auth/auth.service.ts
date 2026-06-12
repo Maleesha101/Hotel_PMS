@@ -14,7 +14,13 @@ const MS_MAP: Record<string, number> = { s: 1000, m: 60000, h: 3600000, d: 86400
 
 export class AuthService {
   private async logAudit(data: AuditLogCreateDto) {
-    await prisma.auditLog.create({ data });
+    try {
+      await prisma.auditLog.create({ data });
+    } catch (error) {
+      // Log error but don't block the main flow if audit logging fails
+      // This prevents login from failing just because the audit log DB write failed
+      logger.error('Audit log failed', { error, data });
+    }
   }
 
   // Helper to hash refresh token

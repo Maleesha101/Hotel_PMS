@@ -1,6 +1,7 @@
 import swaggerJsdoc from 'swagger-jsdoc';
 import swaggerUi from 'swagger-ui-express';
 import { Express } from 'express';
+import { env } from './env';
 
 const options: swaggerJsdoc.Options = {
   definition: {
@@ -29,7 +30,7 @@ Issues RS256-signed JWTs consumed by all downstream services:
       `,
       contact: { name: 'Hotel PMS Team' },
     },
-    servers: [{ url: 'http://localhost:8080', description: 'Local development' }],
+    servers: [{ url: `http://localhost:${env.PORT}`, description: 'Local development' }],
     components: {
       securitySchemes: {
         BearerAuth: {
@@ -57,6 +58,36 @@ Issues RS256-signed JWTs consumed by all downstream services:
             totalPages: { type: 'integer', example: 3 },
           },
         },
+        LoginRequest: {
+          type: 'object',
+          required: ['email', 'password'],
+          properties: {
+            email: { type: 'string', format: 'email', example: 'admin@hotelpms.com' },
+            password: { type: 'string', example: 'Admin@1234!' },
+          },
+        },
+        RefreshRequest: {
+          type: 'object',
+          required: ['refreshToken'],
+          properties: {
+            refreshToken: { type: 'string' },
+          },
+        },
+        VerifyRequest: {
+          type: 'object',
+          required: ['token'],
+          properties: {
+            token: { type: 'string' },
+          },
+        },
+        ChangePasswordRequest: {
+          type: 'object',
+          required: ['currentPassword', 'newPassword'],
+          properties: {
+            currentPassword: { type: 'string' },
+            newPassword: { type: 'string' },
+          },
+        },
       },
     },
     security: [{ BearerAuth: [] }],
@@ -73,6 +104,7 @@ export const setupSwagger = (app: Express): void => {
   app.use('/swagger-ui.html', swaggerUi.serve, swaggerUi.setup(spec, {
     customSiteTitle: 'Hotel PMS Auth API',
     swaggerOptions: {
+      url: '/v3/api-docs', // Explicitly tell Swagger UI where to find the spec
       persistAuthorization: true,
       displayRequestDuration: true,
       tryItOutEnabled: true,

@@ -40,21 +40,21 @@ npx prisma migrate dev --name init
 # Seed development users (creates 5 staff users, one per role)
 npm run seed
 
-# Start the service in dev mode (ts-node-dev) – listens on ${PORT:-8080}
+# Start the service in dev mode (ts-node-dev) – listens on ${PORT:-8081}
 npm run dev
 ```
 
 The health endpoint should respond:
 
 ```bash
-curl http://localhost:8080/health
+curl http://localhost:8081/health
 # => {"status":"ok","uptime":...}
 ```
 
 Swagger UI is available at:
 
 ```
-http://localhost:8080/swagger-ui.html
+http://localhost:8081/swagger-ui.html
 ```
 
 ## Docker Development
@@ -65,7 +65,7 @@ The service can be run entirely inside Docker:
 docker-compose up --build
 ```
 
-- Auth Service: `http://localhost:8080`
+- Auth Service: `http://localhost:8081`
 - PostgreSQL: `postgresql://postgres:postgres@postgres:5432/auth_db`
 - Redis: `redis://redis:6379`
 
@@ -74,7 +74,7 @@ docker-compose up --build
 | Variable | Description | Example |
 |----------|-------------|---------|
 | `NODE_ENV` | Runtime environment | `development` |
-| `PORT` | HTTP port | `8080` |
+| `PORT` | HTTP port | `8081` |
 | `DATABASE_URL` | Prisma connection string | `postgresql://postgres:postgres@postgres:5432/auth_db` |
 | `REDIS_URL` | Redis connection URL | `redis://redis:6379` |
 | `JWT_PRIVATE_KEY` | RSA private key (PEM) used for signing tokens |

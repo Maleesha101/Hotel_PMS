@@ -29,7 +29,7 @@ COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/package*.json ./
 
-EXPOSE 8080
+EXPOSE 8081
 
 # Default command runs the compiled server
 CMD ["node", "dist/server.js"]

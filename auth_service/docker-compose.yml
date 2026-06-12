@@ -2,10 +2,10 @@ services:
   auth-service:
     build: .
     ports:
-      - "8081:8080"
+      - "8081:8081"
     environment:
       NODE_ENV: development
-      PORT: 8080
+      PORT: 8081
       DATABASE_URL: postgresql://postgres:postgres@postgres:5432/auth_db
       REDIS_URL: redis://redis:6379
       JWT_PRIVATE_KEY: "${JWT_PRIVATE_KEY}"
@@ -22,7 +22,7 @@ services:
       redis:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/health/ready"]
+      test: ["CMD", "curl", "-f", "http://localhost:8081/health/ready"]
       interval: 10s
       timeout: 5s
       retries: 5

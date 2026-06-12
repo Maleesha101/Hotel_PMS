@@ -14,8 +14,18 @@ import { setupSwagger } from './config/swagger';
 const app = express();
 
 // Global middlewares
-app.use(helmet());
-app.use(cors({ origin: env.ALLOWED_ORIGINS?.split(',') ?? '*' }));
+app.use(helmet({
+  // Disable CSP for Swagger UI to work correctly; in production, configure specifically if needed
+  contentSecurityPolicy: false,
+}));
+const allowedOrigins = env.ALLOWED_ORIGINS 
+  ? env.ALLOWED_ORIGINS.split(',').map(o => o.trim()) 
+  : '*';
+app.use(cors({ 
+  origin: allowedOrigins
+  origin: allowedOrigins === '*' ? true : allowedOrigins,
+  credentials: true
+}));
 app.use(compression());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));

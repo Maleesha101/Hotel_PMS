@@ -3,7 +3,7 @@ import { env } from './config/env';
 import { logger } from './config/logger';
 import { prisma } from './config/prisma';
 
-const PORT = env.PORT || 8080;
+const PORT = env.PORT || 8081;
 
 app.listen(PORT, () => {
   logger.info(`🚀 Auth Service listening on port ${PORT}`);
