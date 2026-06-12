@@ -22,7 +22,6 @@ const allowedOrigins = env.ALLOWED_ORIGINS
   ? env.ALLOWED_ORIGINS.split(',').map(o => o.trim()) 
   : '*';
 app.use(cors({ 
-  origin: allowedOrigins
   origin: allowedOrigins === '*' ? true : allowedOrigins,
   credentials: true
 }));

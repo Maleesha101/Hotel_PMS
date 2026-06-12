@@ -37,7 +37,7 @@ cp .env.example .env   # edit .env and replace the key placeholders with the act
 # Initialise the database schema
 npx prisma migrate dev --name init
 
-# Seed development users (creates 5 staff users, one per role)
+# Seed development users (if running locally)
 npm run seed
 
 # Start the service in dev mode (ts-node-dev) – listens on ${PORT:-8081}
@@ -68,6 +68,9 @@ docker-compose up --build
 - Auth Service: `http://localhost:8081`
 - PostgreSQL: `postgresql://postgres:postgres@postgres:5432/auth_db`
 - Redis: `redis://redis:6379`
+
+**To run seed inside Docker:**
+`docker-compose exec auth-service npx ts-node src/seed.ts`
 
 ## Environment Variables
 
