@@ -11,6 +11,7 @@
     "migrate:prod": "npx prisma migrate deploy",
     "generate": "npx prisma generate",
     "seed": "ts-node src/seed.ts",
+    "seed:docker": "node dist/seed.js",
     "gen-keys": "npx ts-node scripts/generate-rsa-keys.ts",
     "test": "jest --runInBand --detectOpenHandles",
     "test:watch": "jest --watch",

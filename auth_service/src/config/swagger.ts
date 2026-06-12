@@ -14,7 +14,7 @@ const options: swaggerJsdoc.Options = {
 Central authentication and identity service for the Hotel Property Management System.
 
 Issues RS256-signed JWTs consumed by all downstream services:
-- Reservation Service (port 8081)
+- Reservation Service (port 8079)
 - Housekeeping Service (port 8082)
 - Maintenance Service (port 8083)
 - Invoice Service (port 8084)

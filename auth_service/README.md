@@ -69,8 +69,9 @@ docker-compose up --build
 - PostgreSQL: `postgresql://postgres:postgres@postgres:5432/auth_db`
 - Redis: `redis://redis:6379`
 
-**To run seed inside Docker:**
-`docker-compose exec auth-service npx ts-node src/seed.ts`
+**To initialize the database and seed inside Docker:**
+1. `docker-compose exec auth-service npm run migrate:prod`
+2. `docker-compose exec auth-service npm run seed:docker`
 
 ## Environment Variables
 
