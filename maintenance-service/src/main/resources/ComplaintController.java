@@ -2,15 +2,14 @@ package com.hotelpms.maintenance.domain.complaint;
 
 import com.hotelpms.maintenance.domain.complaint.dto.*;
 import com.hotelpms.maintenance.domain.complaint.mapper.ComplaintMapper;
+import com.hotelpms.maintenance.shared.enums.ComplaintStatus;
+import com.hotelpms.maintenance.shared.enums.Priority;
 import com.hotelpms.maintenance.shared.response.ApiResponse;
 import com.hotelpms.maintenance.shared.response.PagedResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import io.swagger.v3.oas.annotations.responses.ApiResponse as SwaggerApiResponse;
-import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -30,11 +29,10 @@ public class ComplaintController {
 
     private final ComplaintService complaintService;
     private final ComplaintMapper mapper;
-    private final com.h...maintenance.domain.complaint.repository.ComplaintRepository complaintRepository;
 
     @PostMapping
     @Operation(summary = "Record a new complaint")
-    @SwaggerApiResponse(responseCode = "201", description = "Complaint created")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "Complaint created")
     public ResponseEntity<ApiResponse<ComplaintResponse>> createComplaint(@Valid @RequestBody CreateComplaintRequest request) {
         ComplaintResponse response = complaintService.createComplaint(request);
         return ResponseEntity.status(201).body(new ApiResponse<>(201, "Complaint created", response));
@@ -42,7 +40,7 @@ public class ComplaintController {
 
     @GetMapping
     @Operation(summary = "List complaints with optional filters")
-    @SwaggerApiResponse(responseCode = "200", description = "List of complaints")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "List of complaints")
     public ResponseEntity<ApiResponse<PagedResponse<ComplaintResponse>>> listComplaints(
             @RequestParam(required = false) String roomId,
             @RequestParam(required = false) String bookingRef,
@@ -52,18 +50,18 @@ public class ComplaintController {
             @RequestParam(defaultValue = "20") int size) {
         Pageable pageable = PageRequest.of(page, size);
         Page<Complaint> entities;
-        // Simple filter routing – for demo we only use status filter; more complex combos can be added
         if (roomId != null) {
             entities = complaintService.repository.findByRoomId(roomId, pageable);
         } else if (bookingRef != null) {
             entities = complaintService.repository.findByBookingRef(bookingRef, pageable);
         } else if (urgency != null) {
-            entities = complaintService.repository.findByUrgency(com.h...maintenance.shared.enums.Priority.valueOf(urgency), pageable);
+            entities = complaintService.repository.findByUrgency(Priority.valueOf(urgency), pageable);
         } else if (status != null) {
-            entities = complaintService.repository.findByStatus(com.h...maintenance.shared.enums.ComplaintStatus.valueOf(status), pageable);
+            entities = complaintService.repository.findByStatus(ComplaintStatus.valueOf(status), pageable);
         } else {
             entities = complaintService.repository.findAll(pageable);
         }
+
         Page<ComplaintResponse> responses = entities.map(mapper::toResponse);
         PagedResponse<ComplaintResponse> pageDto = new PagedResponse<>(
                 responses.getContent(),
@@ -78,7 +76,7 @@ public class ComplaintController {
 
     @GetMapping("/{id}")
     @Operation(summary = "Get a complaint by its UUID")
-    @SwaggerApiResponse(responseCode = "200", description = "Complaint details")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Complaint details")
     public ResponseEntity<ApiResponse<ComplaintResponse>> getComplaint(@PathVariable UUID id) {
         ComplaintResponse response = complaintService.getById(id);
         return ResponseEntity.ok(new ApiResponse<>(200, "Complaint retrieved", response));
@@ -86,7 +84,7 @@ public class ComplaintController {
 
     @PatchMapping("/{id}")
     @Operation(summary = "Update mutable fields of a complaint (status, resolution notes)")
-    @SwaggerApiResponse(responseCode = "200", description = "Complaint updated")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Complaint updated")
     public ResponseEntity<ApiResponse<ComplaintResponse>> updateComplaint(
             @PathVariable UUID id,
             @Valid @RequestBody UpdateComplaintRequest request) {
@@ -96,10 +94,9 @@ public class ComplaintController {
 
     @PostMapping("/{id}/forward")
     @Operation(summary = "Forward a complaint to maintenance – creates a linked MaintenanceRequest")
-    @SwaggerApiResponse(responseCode = "200", description = "Complaint forwarded")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Complaint forwarded")
     public ResponseEntity<ApiResponse<Void>> forwardComplaint(@PathVariable UUID id,
-                                                               @RequestHeader("Authorization") String authHeader) {
-        // Extract user id from JWT (the JwtAuthFilter already set authentication)
+                                                              @RequestHeader("Authorization") String authHeader) {
         String reportedBy = (String) org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         complaintService.forwardComplaint(id, reportedBy);
         return ResponseEntity.ok(new ApiResponse<>(200, "Complaint forwarded to maintenance", null));

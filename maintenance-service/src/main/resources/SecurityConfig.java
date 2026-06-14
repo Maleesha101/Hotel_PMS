@@ -1,7 +1,5 @@
 package com.hotelpms.maintenance.config;
 
-import com.hotelpms.maintenance.shared.exception.GlobalExceptionHandler;
-import jakarta.servlet.Filter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -54,13 +52,14 @@ public class SecurityConfig {
                 })
                 // Public health endpoints
                 .requestMatchers(HttpMethod.GET, "/actuator/health", "/actuator/info").permitAll()
-                // Front Desk can create and read complaints
-                .requestMatchers(HttpMethod.POST, "/api/v1/complaints").hasAnyRole("ADMIN", "FRONT_DESK")
-                .requestMatchers(HttpMethod.GET, "/api/v1/complaints/**").hasAnyRole("ADMIN", "FRONT_DESK", "HOUSEKEEPING")
-                // Maintenance staff can manage requests, equipment, schedules
-                .requestMatchers(HttpMethod.*).hasAnyRole("ADMIN", "MAINTENANCE_STAFF")
-                // Any other request requires authentication
-                .anyRequest().authenticated()
+                    // Front Desk can create and read complaints
+                    .requestMatchers(HttpMethod.POST, "/api/v1/complaints").hasAnyRole("ADMIN", "FRONT_DESK")
+                    .requestMatchers(HttpMethod.GET, "/api/v1/complaints/**").hasAnyRole("ADMIN", "FRONT_DESK", "HOUSEKEEPING")
+                    // Maintenance staff can manage requests, equipment, schedules
+                    .requestMatchers("/api/v1/requests/**", "/api/v1/equipment/**", "/api/v1/schedules/**")
+                    .hasAnyRole("ADMIN", "MAINTENANCE_STAFF")
+                    // Any other request requires authentication
+                    .anyRequest().authenticated()
             )
             // Add JWT filter before Spring Security's UsernamePasswordAuthenticationFilter
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);

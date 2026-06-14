@@ -5,6 +5,7 @@ All endpoints require the Admin role (as per user specification).
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.ext.asyncio import AsyncSession
 from app.dependencies import require_roles
 from app.shared.responses import ApiResponse
 from app.domain.room_status import schemas as rs_schemas
@@ -47,7 +48,7 @@ async def list_rooms(
         limit=size,
         offset=offset,
     )
-    response_data = [rs_schemas.RoomStatusResponse.from_orm(r) for r in rooms]
+    response_data = [rs_schemas.RoomStatusResponse.model_validate(r) for r in rooms]
     return ApiResponse(status="success", data=response_data)
 
 @router.get("/rooms/status/{room_id}", response_model=ApiResponse)
@@ -55,7 +56,7 @@ async def get_room_status(room_id: str, db: AsyncSession = Depends(get_db), _: N
     room = await rs_repo.get_by_room_id(db=db, room_id=room_id)
     if not room:
         raise HTTPException(status_code=404, detail="Room not found")
-    return ApiResponse(status="success", data=rs_schemas.RoomStatusResponse.from_orm(room))
+    return ApiResponse(status="success", data=rs_schemas.RoomStatusResponse.model_validate(room))
 
 @router.patch("/rooms/status/{room_id}", response_model=ApiResponse)
 async def update_room_status(
@@ -73,7 +74,7 @@ async def update_room_status(
             status_note=payload.status_note,
         )
         await _publish_status_change(room_id, payload.status.value)
-        return ApiResponse(status="success", data=rs_schemas.RoomStatusResponse.from_orm(room))
+        return ApiResponse(status="success", data=rs_schemas.RoomStatusResponse.model_validate(room))
     except ValueError as ve:
         raise HTTPException(status_code=404, detail=str(ve))
     except SQLAlchemyError:
@@ -96,7 +97,7 @@ async def bulk_update_status(
                 status_note=item.status_note,
             )
             await _publish_status_change(item.room_id, item.status.value)
-            updated.append(rs_schemas.RoomStatusResponse.from_orm(room))
+            updated.append(rs_schemas.RoomStatusResponse.model_validate(room))
         except Exception:
             continue
     return ApiResponse(status="success", data={"updated": len(updated)})

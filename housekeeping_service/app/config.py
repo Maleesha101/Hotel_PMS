@@ -23,13 +23,12 @@ class Settings(BaseSettings):
     DAMAGE_INVOICE_TOPIC: str = "hotel:damage-to-invoice"
 
     # JWT
-    JWT_PUBLIC_KEY: str = ""
+    JWT_PUBLIC_KEY: str = "-----BEGIN PUBLIC KEY-----\n...\n-----END PUBLIC KEY-----"
+
 
     # Scheduler
     LOW_STOCK_CHECK_CRON: str = "0 7 * * *"
 
-    class Config:
-        env_file = ".env"
-        env_file_encoding = "utf-8"
+    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 
 settings = Settings()
