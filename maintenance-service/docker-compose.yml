@@ -10,6 +10,7 @@ services:
       DB_PASS: postgres
       KAFKA_BOOTSTRAP: kafka:9092
       SPRING_PROFILES_ACTIVE: dev
+      JWT_PUBLIC_KEY: ${JWT_PUBLIC_KEY}
     depends_on:
       - postgres
       - kafka

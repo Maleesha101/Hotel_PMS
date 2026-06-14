@@ -52,11 +52,24 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                 String token = header.substring(BEARER_PREFIX.length());
                 Claims claims = parseToken(token);
                 String subject = claims.getSubject();
-                @SuppressWarnings("unchecked")
-                List<String> roles = claims.get("roles", List.class);
-                List<SimpleGrantedAuthority> authorities = roles != null ?
-                        roles.stream().map(r -> new SimpleGrantedAuthority("ROLE_" + r)).collect(Collectors.toList())
-                        : Collections.emptyList();
+
+                // Extract roles from JWT. Handle "role" (string) or "roles" (list) for compatibility.
+                Object rolesClaim = claims.get("role");
+                if (rolesClaim == null) {
+                    rolesClaim = claims.get("roles");
+                }
+
+                List<SimpleGrantedAuthority> authorities;
+                if (rolesClaim instanceof String role) {
+                    authorities = Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + role));
+                } else if (rolesClaim instanceof List<?> rolesList) {
+                    authorities = rolesList.stream()
+                            .map(r -> new SimpleGrantedAuthority("ROLE_" + r.toString()))
+                            .collect(Collectors.toList());
+                } else {
+                    authorities = Collections.emptyList();
+                }
+
                 UsernamePasswordAuthenticationToken authentication =
                         new UsernamePasswordAuthenticationToken(subject, null, authorities);
                 SecurityContextHolder.getContext().setAuthentication(authentication);
