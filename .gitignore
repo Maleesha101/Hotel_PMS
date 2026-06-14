@@ -35,3 +35,4 @@ out/
 .env
 ### VS Code ###
 .vscode/
+.keys/

@@ -10,6 +10,7 @@ from app.shared.responses import ApiResponse
 from app.domain.room_status import schemas as rs_schemas
 from app.domain.room_status import repository as rs_repo
 from app.database import get_db
+from sqlalchemy.ext.asyncio import AsyncSession
 from app.config import settings
 import json
 from redis import asyncio as aioredis
