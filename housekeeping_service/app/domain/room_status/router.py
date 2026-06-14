@@ -101,9 +101,10 @@ async def bulk_update_status(
             continue
     return ApiResponse(status="success", data={"updated": len(updated)})
 
-@router.get("/rooms/status/dashboard", response_model=ApiResponse)
-async def dashboard(db: AsyncSession = Depends(get_db), _: None = admin_dep):
-    counts = await rs_repo.count_by_status(db=db)
-    total = sum(counts.values())
-    dashboard = rs_schemas.DashboardResponse(counts=counts, total_rooms=total)
-    return ApiResponse(status="success", data=dashboard)
+@router.post("/rooms/{room_id}/checkout", response_model=TaskRead)
+async def simulate_checkout(room_id: str, room_type: str, db: AsyncSession = Depends(get_db)):
+    """Triggered by checkout event: creates a CHECKOUT_CLEAN task."""
+    task = HousekeepingTask(room_id=room_id, room_type=room_type, type="CHECKOUT_CLEAN", status="PENDING")
+    db.add(task)
+    await db.flush()
+    return task

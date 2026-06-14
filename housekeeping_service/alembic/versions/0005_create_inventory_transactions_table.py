@@ -2,9 +2,9 @@
 
 # revision identifiers, used by Alembic.
 revision = "0005"
- down_revision = "0004"
- branch_labels = None
- depends_on = None
+down_revision = "0004"
+branch_labels = None
+depends_on = None
 
 from alembic import op
 import sqlalchemy as sa

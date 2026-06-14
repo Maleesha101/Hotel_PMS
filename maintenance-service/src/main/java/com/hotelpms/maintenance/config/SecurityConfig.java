@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.authorization.AuthorizationDecision;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
@@ -46,19 +47,15 @@ public class SecurityConfig {
             // Authorize requests
             .authorizeHttpRequests(auth -> auth
                 // Swagger UI – only enabled in dev profile
-                .requestMatchers("/swagger-ui.html/**", "/v3/api-docs/**").access((authz, context) -> {
-                    if ("prod".equalsIgnoreCase(activeProfile)) {
-                        return authz.denyAll();
-                    }
-                    return authz.permitAll();
-                })
+                .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs", "/v3/api-docs/**")
+                .access((authentication, context) -> new AuthorizationDecision(!"prod".equalsIgnoreCase(activeProfile)))
                 // Public health endpoints
                 .requestMatchers(HttpMethod.GET, "/actuator/health", "/actuator/info").permitAll()
                 // Front Desk can create and read complaints
                 .requestMatchers(HttpMethod.POST, "/api/v1/complaints").hasAnyRole("ADMIN", "FRONT_DESK")
                 .requestMatchers(HttpMethod.GET, "/api/v1/complaints/**").hasAnyRole("ADMIN", "FRONT_DESK", "HOUSEKEEPING")
                 // Maintenance staff can manage requests, equipment, schedules
-                .requestMatchers(HttpMethod.*).hasAnyRole("ADMIN", "MAINTENANCE_STAFF")
+                .requestMatchers("/api/v1/**").hasAnyRole("ADMIN", "MAINTENANCE_STAFF")
                 // Any other request requires authentication
                 .anyRequest().authenticated()
             )

@@ -3,7 +3,6 @@ package com.hotelpms.maintenance.config;
 import com.hotelpms.maintenance.shared.exception.InvalidStateException;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.security.Keys;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -19,11 +18,14 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.security.Key;
+import java.security.KeyFactory;
+import java.security.PublicKey;
+import java.security.spec.X509EncodedKeySpec;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.security.Key;
 
 /**
  * JWT authentication filter that validates RS256 tokens using the public key supplied via
@@ -36,6 +38,8 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
     @Value("${jwt.public-key:}")
     private String publicKeyPem;
+
+    private volatile PublicKey cachedPublicKey;
 
     private static final String BEARER_PREFIX = "Bearer ";
 
@@ -64,7 +68,11 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 
-    private Claims parseToken(String token) {
+    private PublicKey getPublicKey() {
+        if (cachedPublicKey != null) {
+            return cachedPublicKey;
+        }
+
         if (!StringUtils.hasText(publicKeyPem)) {
             throw new InvalidStateException("JWT public key is not configured");
         }
@@ -73,9 +81,20 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                 .replaceAll("-----BEGIN PUBLIC KEY-----", "")
                 .replaceAll("-----END PUBLIC KEY-----", "")
                 .replaceAll("\\s", "");
-        byte[] keyBytes = java.util.Base64.getDecoder().decode(cleaned);
-        Key key = Keys.hmacShaKeyFor(keyBytes); // Using HMAC for simplicity – in real RS256 use RSA public key
-        // For RS256 we would use Keys.rsaPublicKey(...), but to avoid extra dependencies we validate signature loosely.
+        
+        try {
+            byte[] keyBytes = Base64.getDecoder().decode(cleaned);
+            X509EncodedKeySpec spec = new X509EncodedKeySpec(keyBytes);
+            KeyFactory kf = KeyFactory.getInstance("RSA");
+            this.cachedPublicKey = kf.generatePublic(spec);
+            return cachedPublicKey;
+        } catch (Exception e) {
+            throw new InvalidStateException("Failed to reconstruct public key: " + e.getMessage());
+        }
+    }
+
+    private Claims parseToken(String token) {
+        Key key = getPublicKey();
         return Jwts.parserBuilder()
                 .setSigningKey(key)
                 .build()

@@ -1,20 +1,12 @@
 """Inventory router – implements full CRUD, transaction handling, low‑stock and summary endpoints.
 
-All endpoints require the Admin role. Pagination defaults to page size 20.
-"""
-
-from fastapi import APIRouter, Depends, HTTPException, Query
-from typing import List
-
-from app.dependencies import require_roles
-from app.shared.responses import ApiResponse
+from fastapi import APIRouter, Depends
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 from app.database import get_db
-from app.config import settings
-from app.messaging.producer import publish
-
-from app.domain.inventory import schemas as inv_schemas
-from app.domain.inventory import repository as inv_repo
-from app.domain.inventory.model import InventoryItemModel
+from app.models import InventoryItem
+from app.schemas import InventoryItemCreate, InventoryItemRead
+from typing import List
 
 router = APIRouter()
 admin_dep = Depends(require_roles("Admin"))
@@ -105,7 +97,14 @@ async def low_stock_items(db=Depends(get_db), _: None = admin_dep):
     data = [inv_schemas.InventoryItemResponse.from_orm(i) for i in items]
     return ApiResponse(status="success", data=data)
 
-@router.get("/inventory/summary", response_model=ApiResponse)
-async def inventory_summary(db=Depends(get_db), _: None = admin_dep):
-    summary = await inv_repo.summary_by_category(db=db)
-    return ApiResponse(status="success", data=summary)
+@router.post("/inventory", response_model=InventoryItemRead)
+async def create_inventory_item(item_in: InventoryItemCreate, db: AsyncSession = Depends(get_db)):
+    item = InventoryItem(**item_in.model_dump())
+    db.add(item)
+    await db.flush()
+    return item
+
+@router.get("/inventory", response_model=List[InventoryItemRead])
+async def list_inventory(db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(InventoryItem))
+    return result.scalars().all()
