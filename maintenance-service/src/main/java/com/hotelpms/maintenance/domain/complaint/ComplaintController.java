@@ -14,6 +14,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
@@ -39,6 +40,7 @@ public class ComplaintController {
     }
 
     @GetMapping
+    @Transactional(readOnly = true)
     @Operation(summary = "List complaints with optional filters")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "List of complaints")
     public ResponseEntity<ApiResponse<PagedResponse<ComplaintResponse>>> listComplaints(
@@ -61,11 +63,12 @@ public class ComplaintController {
         } else {
             entities = complaintService.findAll(pageable);
         }
-        return ResponseEntity.ok(new ApiResponse<>(200, "Complaints retrieved", 
-                PagedResponse.from(entities.map(mapper::toResponse))));
+        Page<ComplaintResponse> responses = entities.map(mapper::toResponse);
+        return ResponseEntity.ok(new ApiResponse<>(200, "Complaints retrieved", PagedResponse.from(responses)));
     }
 
     @GetMapping("/{id}")
+    @Transactional(readOnly = true)
     @Operation(summary = "Get a complaint by its UUID")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Complaint details")
     public ResponseEntity<ApiResponse<ComplaintResponse>> getComplaint(@PathVariable UUID id) {

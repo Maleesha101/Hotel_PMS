@@ -41,34 +41,41 @@ public class MaintenanceRequestService {
         return mapper.toResponse(saved);
     }
 
+    @Transactional(readOnly = true)
     public MaintenanceRequestResponse getById(UUID id) {
         return repository.findById(id)
                 .map(mapper::toResponse)
                 .orElseThrow(() -> new ResourceNotFoundException("Maintenance request not found"));
     }
 
-    public Page<MaintenanceRequest> findByStatus(MaintenanceStatus status, Pageable pageable) {
-        return repository.findByStatus(status, pageable);
+    @Transactional(readOnly = true)
+    public Page<MaintenanceRequestResponse> findByStatus(MaintenanceStatus status, Pageable pageable) {
+        return repository.findByStatus(status, pageable).map(mapper::toResponse);
     }
 
-    public Page<MaintenanceRequest> findByRoomId(String roomId, Pageable pageable) {
-        return repository.findByRoomId(roomId, pageable);
+    @Transactional(readOnly = true)
+    public Page<MaintenanceRequestResponse> findByRoomId(String roomId, Pageable pageable) {
+        return repository.findByRoomId(roomId, pageable).map(mapper::toResponse);
     }
 
-    public Page<MaintenanceRequest> findByPriority(Priority priority, Pageable pageable) {
-        return repository.findByPriority(priority, pageable);
+    @Transactional(readOnly = true)
+    public Page<MaintenanceRequestResponse> findByPriority(Priority priority, Pageable pageable) {
+        return repository.findByPriority(priority, pageable).map(mapper::toResponse);
     }
 
-    public Page<MaintenanceRequest> findByAssignedTechnician(String technician, Pageable pageable) {
-        return repository.findByAssignedTechnician(technician, pageable);
+    @Transactional(readOnly = true)
+    public Page<MaintenanceRequestResponse> findByAssignedTechnician(String technician, Pageable pageable) {
+        return repository.findByAssignedTechnician(technician, pageable).map(mapper::toResponse);
     }
 
-    public Page<MaintenanceRequest> findAll(Pageable pageable) {
-        return repository.findAll(pageable);
+    @Transactional(readOnly = true)
+    public Page<MaintenanceRequestResponse> findAll(Pageable pageable) {
+        return repository.findAll(pageable).map(mapper::toResponse);
     }
 
-    public Page<MaintenanceRequest> findByRoomIdAndStatusIn(String roomId, List<MaintenanceStatus> statuses, Pageable pageable) {
-        return repository.findByRoomIdAndStatusIn(roomId, statuses, pageable);
+    @Transactional(readOnly = true)
+    public Page<MaintenanceRequestResponse> findByRoomIdAndStatusIn(String roomId, List<MaintenanceStatus> statuses, Pageable pageable) {
+        return repository.findByRoomIdAndStatusIn(roomId, statuses, pageable).map(mapper::toResponse);
     }
 
     @Transactional

@@ -48,20 +48,19 @@ public class MaintenanceRequestController {
             @RequestParam(name = "page", defaultValue = "0") int page,
             @RequestParam(name = "size", defaultValue = "20") int size) {
         Pageable pageable = PageRequest.of(page, size);
-        Page<MaintenanceRequest> entities;
+        Page<MaintenanceRequestResponse> responses;
         if (status != null) {
-            entities = requestService.findByStatus(status, pageable);
+            responses = requestService.findByStatus(status, pageable);
         } else if (roomId != null) {
-            entities = requestService.findByRoomId(roomId, pageable);
+            responses = requestService.findByRoomId(roomId, pageable);
         } else if (priority != null) {
-            entities = requestService.findByPriority(priority, pageable);
+            responses = requestService.findByPriority(priority, pageable);
         } else if (technician != null) {
-            entities = requestService.findByAssignedTechnician(technician, pageable);
+            responses = requestService.findByAssignedTechnician(technician, pageable);
         } else {
-            entities = requestService.findAll(pageable);
+            responses = requestService.findAll(pageable);
         }
-        return ResponseEntity.ok(new ApiResponse<>(200, "Maintenance requests retrieved", 
-                PagedResponse.from(entities.map(mapper::toResponse))));
+        return ResponseEntity.ok(new ApiResponse<>(200, "Maintenance requests retrieved", PagedResponse.from(responses)));
     }
     @GetMapping("/{id}")
     @Operation(summary = "Get a maintenance request by its UUID")
@@ -113,8 +112,7 @@ public class MaintenanceRequestController {
                 MaintenanceStatus.IN_PROGRESS,
                 MaintenanceStatus.WAITING_FOR_PARTS
         );
-        Page<MaintenanceRequest> entities = requestService.findByRoomIdAndStatusIn(roomId, openStatuses, pageable);
-        return ResponseEntity.ok(new ApiResponse<>(200, "Open requests for room retrieved", 
-                PagedResponse.from(entities.map(mapper::toResponse))));
+        Page<MaintenanceRequestResponse> responses = requestService.findByRoomIdAndStatusIn(roomId, openStatuses, pageable);
+        return ResponseEntity.ok(new ApiResponse<>(200, "Open requests for room retrieved", PagedResponse.from(responses)));
     }
 }
