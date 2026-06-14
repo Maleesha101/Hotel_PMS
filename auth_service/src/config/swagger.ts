@@ -1,0 +1,114 @@
+import swaggerJsdoc from 'swagger-jsdoc';
+import swaggerUi from 'swagger-ui-express';
+import { Express } from 'express';
+import { env } from './env';
+
+const options: swaggerJsdoc.Options = {
+  definition: {
+    openapi: '3.0.0',
+    info: {
+      title: 'Hotel PMS — Auth & User Service API',
+      version: '1.0.0',
+      description: `
+## Overview
+Central authentication and identity service for the Hotel Property Management System.
+
+Issues RS256-signed JWTs consumed by all downstream services:
+- Reservation Service (port 8079)
+- Housekeeping Service (port 8082)
+- Maintenance Service (port 8083)
+- Invoice Service (port 8084)
+
+## Auth Flow
+1. POST /api/v1/auth/login → receive accessToken + refreshToken
+2. Include accessToken in \`Authorization: Bearer <token>\` header
+3. Refresh before expiry via POST /api/v1/auth/refresh
+
+## Token Lifetime
+- Access token: 15 minutes
+- Refresh token: 7 days (rotated on each use)
+      `,
+      contact: { name: 'Hotel PMS Team' },
+    },
+    servers: [{ url: `http://localhost:${env.PORT}`, description: 'Local development' }],
+    components: {
+      securitySchemes: {
+        BearerAuth: {
+          type: 'http',
+          scheme: 'bearer',
+          bearerFormat: 'JWT',
+          description: 'RS256 JWT access token issued by this service',
+        },
+      },
+      schemas: {
+        ApiResponse: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean', example: true },
+            data: { type: 'object' },
+            message: { type: 'string' },
+          },
+        },
+        PaginationMeta: {
+          type: 'object',
+          properties: {
+            total: { type: 'integer', example: 42 },
+            page: { type: 'integer', example: 1 },
+            pageSize: { type: 'integer', example: 20 },
+            totalPages: { type: 'integer', example: 3 },
+          },
+        },
+        LoginRequest: {
+          type: 'object',
+          required: ['email', 'password'],
+          properties: {
+            email: { type: 'string', format: 'email', example: 'admin@hotelpms.com' },
+            password: { type: 'string', example: 'Admin@1234!' },
+          },
+        },
+        RefreshRequest: {
+          type: 'object',
+          required: ['refreshToken'],
+          properties: {
+            refreshToken: { type: 'string' },
+          },
+        },
+        VerifyRequest: {
+          type: 'object',
+          required: ['token'],
+          properties: {
+            token: { type: 'string' },
+          },
+        },
+        ChangePasswordRequest: {
+          type: 'object',
+          required: ['currentPassword', 'newPassword'],
+          properties: {
+            currentPassword: { type: 'string' },
+            newPassword: { type: 'string' },
+          },
+        },
+      },
+    },
+    security: [{ BearerAuth: [] }],
+  },
+  apis: [
+    process.env.NODE_ENV === 'production' || __filename.endsWith('.js')
+      ? './dist/modules/**/*.routes.js' 
+      : './src/modules/**/*.routes.ts'
+  ],
+};
+
+export const setupSwagger = (app: Express): void => {
+  const spec = swaggerJsdoc(options);
+  app.use('/swagger-ui.html', swaggerUi.serve, swaggerUi.setup(spec, {
+    customSiteTitle: 'Hotel PMS Auth API',
+    swaggerOptions: {
+      url: '/v3/api-docs', // Explicitly tell Swagger UI where to find the spec
+      persistAuthorization: true,
+      displayRequestDuration: true,
+      tryItOutEnabled: true,
+    },
+  }));
+  app.get('/v3/api-docs', (_req, res) => res.json(spec));
+};

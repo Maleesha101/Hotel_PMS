@@ -1,12 +1,105 @@
-"""Room status router – stub implementation for initial import validation."""
+"""Room status router – implements full CRUD and dashboard endpoints.
 
-from fastapi import APIRouter, Depends
-from sqlalchemy.ext.asyncio import AsyncSession
+All endpoints require the Admin role (as per user specification).
+"""
+
+from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy.exc import SQLAlchemyError
+from app.dependencies import require_roles
+from app.shared.responses import ApiResponse
+from app.domain.room_status import schemas as rs_schemas
+from app.domain.room_status import repository as rs_repo
 from app.database import get_db
-from app.models import HousekeepingTask
-from app.schemas import TaskRead
+from app.config import settings
+import json
+from redis import asyncio as aioredis
 
 router = APIRouter()
+admin_dep = Depends(require_roles("Admin"))
+
+# Helper to publish Redis messages
+async def _publish_status_change(room_id: str, status: str):
+    try:
+        r = await aioredis.from_url(settings.REDIS_URL)
+        payload = json.dumps({"room_id": room_id, "status": status})
+        await r.publish(settings.ROOM_STATUS_CHANNEL, payload)
+        await r.close()
+    except Exception:
+        # In production log the exception; ignore here to keep API stable
+        pass
+
+@router.get("/rooms/status", response_model=ApiResponse)
+async def list_rooms(
+    status: str | None = Query(None),
+    floor: int | None = Query(None),
+    room_type: str | None = Query(None),
+    page: int = Query(1, ge=1),
+    size: int = Query(20, ge=1, le=100),
+    db: AsyncSession = Depends(get_db),
+    _: None = admin_dep,
+):
+    offset = (page - 1) * size
+    rooms = await rs_repo.list_rooms(
+        db=db,
+        status=status,
+        floor=floor,
+        room_type=room_type,
+        limit=size,
+        offset=offset,
+    )
+    response_data = [rs_schemas.RoomStatusResponse.from_orm(r) for r in rooms]
+    return ApiResponse(status="success", data=response_data)
+
+@router.get("/rooms/status/{room_id}", response_model=ApiResponse)
+async def get_room_status(room_id: str, db: AsyncSession = Depends(get_db), _: None = admin_dep):
+    room = await rs_repo.get_by_room_id(db=db, room_id=room_id)
+    if not room:
+        raise HTTPException(status_code=404, detail="Room not found")
+    return ApiResponse(status="success", data=rs_schemas.RoomStatusResponse.from_orm(room))
+
+@router.patch("/rooms/status/{room_id}", response_model=ApiResponse)
+async def update_room_status(
+    room_id: str,
+    payload: rs_schemas.UpdateRoomStatusRequest,
+    db: AsyncSession = Depends(get_db),
+    _: None = admin_dep,
+):
+    try:
+        room = await rs_repo.update_status(
+            db=db,
+            room_id=room_id,
+            new_status=payload.status.value,
+            updated_by=payload.updated_by,
+            status_note=payload.status_note,
+        )
+        await _publish_status_change(room_id, payload.status.value)
+        return ApiResponse(status="success", data=rs_schemas.RoomStatusResponse.from_orm(room))
+    except ValueError as ve:
+        raise HTTPException(status_code=404, detail=str(ve))
+    except SQLAlchemyError:
+        raise HTTPException(status_code=500, detail="Database error")
+
+@router.post("/rooms/status/bulk-update", response_model=ApiResponse)
+async def bulk_update_status(
+    bulk: rs_schemas.BulkUpdateRequest,
+    db: AsyncSession = Depends(get_db),
+    _: None = admin_dep,
+):
+    updated = []
+    for item in bulk.updates:
+        try:
+            room = await rs_repo.update_status(
+                db=db,
+                room_id=item.room_id,
+                new_status=item.status.value,
+                updated_by=item.updated_by,
+                status_note=item.status_note,
+            )
+            await _publish_status_change(item.room_id, item.status.value)
+            updated.append(rs_schemas.RoomStatusResponse.from_orm(room))
+        except Exception:
+            continue
+    return ApiResponse(status="success", data={"updated": len(updated)})
 
 @router.post("/rooms/{room_id}/checkout", response_model=TaskRead)
 async def simulate_checkout(room_id: str, room_type: str, db: AsyncSession = Depends(get_db)):
