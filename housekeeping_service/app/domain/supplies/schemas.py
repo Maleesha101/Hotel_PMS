@@ -5,12 +5,14 @@ These define request and response models for room supply standards.
 
 from __future__ import annotations
 
+from uuid import UUID
+from datetime import datetime
 from typing import Optional, List
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from app.shared.enums import RoomStatus
 
 class SupplyStandardResponse(BaseModel):
-    id: str
+    id: UUID
     room_type: str
     item_name: str
     category: str
@@ -18,11 +20,10 @@ class SupplyStandardResponse(BaseModel):
     unit: Optional[str]
     is_active: bool
     notes: Optional[str]
-    created_at: str
-    updated_at: str
+    created_at: datetime
+    updated_at: datetime
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 class CreateSupplyStandardRequest(BaseModel):
     room_type: str = Field(..., description="Room type the supply applies to")

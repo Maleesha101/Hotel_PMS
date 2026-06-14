@@ -19,12 +19,15 @@ async def get_by_id(db: AsyncSession, standard_id: str) -> Optional[RoomSupplySt
     return result.scalars().first()
 
 async def get_by_room_type(db: AsyncSession, room_type: str) -> List[RoomSupplyStandardModel]:
-    stmt = select(RoomSupplyStandardModel).where(
-        RoomSupplyStandardModel.room_type == room_type, 
-        RoomSupplyStandardModel.is_active == True
+    result = await db.execute(
+        select(RoomSupplyStandardModel)
+        .where(
+            RoomSupplyStandardModel.room_type == room_type,
+            RoomSupplyStandardModel.is_active.is_(True),
+        )
     )
-    result = await db.execute(stmt)
-    return list(result.scalars().all())
+    return result.scalars().all()
+
 async def update_standard(db: AsyncSession, standard_id: str, **fields) -> RoomSupplyStandardModel:
     await db.execute(update(RoomSupplyStandardModel).where(RoomSupplyStandardModel.id == standard_id).values(**fields))
     await db.flush()

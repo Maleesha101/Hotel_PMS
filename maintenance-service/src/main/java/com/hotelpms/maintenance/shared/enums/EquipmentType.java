@@ -1,13 +1,8 @@
 package com.hotelpms.maintenance.shared.enums;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-
 /**
  * Types of equipment tracked by the service.
  */
-@Getter
-@AllArgsConstructor
 public enum EquipmentType {
     AC("AC"),
     TV("TV"),
@@ -18,4 +13,12 @@ public enum EquipmentType {
     OTHER("OTHER");
 
     private final String value;
+
+    EquipmentType(String value) {
+        this.value = value;
+    }
+
+    public String getValue() {
+        return value;
+    }
 }

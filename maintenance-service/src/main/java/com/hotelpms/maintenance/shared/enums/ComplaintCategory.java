@@ -1,13 +1,8 @@
 package com.hotelpms.maintenance.shared.enums;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-
 /**
  * Categories for a complaint.
  */
-@Getter
-@AllArgsConstructor
 public enum ComplaintCategory {
     AC("AC"),
     PLUMBING("PLUMBING"),
@@ -18,4 +13,12 @@ public enum ComplaintCategory {
     OTHER("OTHER");
 
     private final String value;
+
+    ComplaintCategory(String value) {
+        this.value = value;
+    }
+
+    public String getValue() {
+        return value;
+    }
 }

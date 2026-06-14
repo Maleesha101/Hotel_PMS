@@ -12,7 +12,7 @@ class InventoryTransactionModel(Base):
 
     id = Column(PG_UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     item_id = Column(PG_UUID(as_uuid=True), ForeignKey("inventory_items.id"), nullable=False)
-    transaction_type = Column(String(20), nullable=False)  # could use Enum(TransactionType) if desired
+    transaction_type = Column(Enum(TransactionType, create_type=False), nullable=False)
     quantity = Column(Integer, nullable=False)
     balance_after = Column(Integer, nullable=False)
     room_id = Column(String(50), nullable=True)

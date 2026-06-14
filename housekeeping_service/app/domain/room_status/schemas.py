@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from uuid import UUID
 from typing import Optional, List, Dict
 from datetime import datetime
 from pydantic import BaseModel, Field, ConfigDict
@@ -9,7 +10,8 @@ from app.shared.enums import RoomStatus
 
 class RoomStatusResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
-    id: str = Field(..., description="UUID of the room status record")
+
+    id: UUID = Field(..., description="UUID of the room status record")
     room_id: str = Field(..., description="Shared identifier with Reservation Service")
     room_number: str = Field(..., description="Human‑readable room number")
     floor: Optional[int] = Field(None, description="Floor number")

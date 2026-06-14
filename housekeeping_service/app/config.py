@@ -1,3 +1,5 @@
+import os
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
@@ -23,12 +25,26 @@ class Settings(BaseSettings):
     DAMAGE_INVOICE_TOPIC: str = "hotel:damage-to-invoice"
 
     # JWT
-    JWT_PUBLIC_KEY: str = "-----BEGIN PUBLIC KEY-----\n...\n-----END PUBLIC KEY-----"
+    JWT_PUBLIC_KEY: str = ""
 
+    @field_validator("JWT_PUBLIC_KEY", mode="before")
+    @classmethod
+    def load_jwt_public_key(cls, v: str) -> str:
+        """If the value looks like a file path, try to load its content."""
+        if isinstance(v, str) and v.strip().startswith((".", "/")):
+            if os.path.exists(v):
+                try:
+                    with open(v, "r") as f:
+                        return f.read()
+                except Exception:
+                    return v
+        return v
 
     # Scheduler
     LOW_STOCK_CHECK_CRON: str = "0 7 * * *"
 
-    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
+    class Config:
+        env_file = ".env"
+        env_file_encoding = "utf-8"
 
 settings = Settings()

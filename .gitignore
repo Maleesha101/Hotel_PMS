@@ -35,3 +35,8 @@ out/
 .env
 ### VS Code ###
 .vscode/
+/.venv/
+housekeeping_service/.venv/lib/python3.12/site-packages/aiokafka/errors.py
+housekeeping_service/.venv/lib/python3.12/site-packages/aiokafka/structs.py
+housekeeping_service/.keys/private.pem
+housekeeping_service/.keys/public.pem

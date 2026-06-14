@@ -1,22 +1,22 @@
 """Room status router – implements full CRUD and dashboard endpoints.
 
-All endpoints require the Admin role (as per user specification).
+All endpoints require Admin or Housekeeping roles.
 """
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.ext.asyncio import AsyncSession
 from app.dependencies import require_roles
 from app.shared.responses import ApiResponse
 from app.domain.room_status import schemas as rs_schemas
 from app.domain.room_status import repository as rs_repo
 from app.database import get_db
+from sqlalchemy.ext.asyncio import AsyncSession
 from app.config import settings
 import json
 from redis import asyncio as aioredis
 
 router = APIRouter()
-admin_dep = Depends(require_roles("Admin"))
+admin_dep = Depends(require_roles("Admin", "Housekeeping"))
 
 # Helper to publish Redis messages
 async def _publish_status_change(room_id: str, status: str):

@@ -23,7 +23,7 @@ async def list_supplies(
     db=Depends(get_db),
 ):
     supplies = await sup_repo.list_supplies(db, limit=size, offset=(page - 1) * size)
-    data = [sup_schemas.SupplyStandardResponse.from_orm(s) for s in supplies]
+    data = [sup_schemas.SupplyStandardResponse.model_validate(s) for s in supplies]
     return ApiResponse(status="success", data=data)
 
 @router.get("/supplies/{room_type}", response_model=ApiResponse)
@@ -33,18 +33,18 @@ async def get_supplies_by_room_type(
     db=Depends(get_db),
 ):
     supplies = await sup_repo.get_by_room_type(db, room_type)
-    data = [sup_schemas.SupplyStandardResponse.from_orm(s) for s in supplies]
+    data = [sup_schemas.SupplyStandardResponse.model_validate(s) for s in supplies]
     return ApiResponse(status="success", data=data)
 
 @router.post("/supplies", response_model=ApiResponse)
 async def create_supply(payload: sup_schemas.CreateSupplyStandardRequest, _: None = admin_dep, db=Depends(get_db)):
-    standard = await sup_repo.create_standard(db, **payload.dict())
-    return ApiResponse(status="success", data=sup_schemas.SupplyStandardResponse.from_orm(standard))
+    standard = await sup_repo.create_standard(db, **payload.model_dump())
+    return ApiResponse(status="success", data=sup_schemas.SupplyStandardResponse.model_validate(standard))
 
 @router.patch("/supplies/{standard_id}", response_model=ApiResponse)
 async def update_supply(standard_id: str, payload: sup_schemas.UpdateSupplyStandardRequest, _: None = admin_dep, db=Depends(get_db)):
-    standard = await sup_repo.update_standard(db, standard_id, **payload.dict(exclude_unset=True))
-    return ApiResponse(status="success", data=sup_schemas.SupplyStandardResponse.from_orm(standard))
+    standard = await sup_repo.update_standard(db, standard_id, **payload.model_dump(exclude_unset=True))
+    return ApiResponse(status="success", data=sup_schemas.SupplyStandardResponse.model_validate(standard))
 
 @router.delete("/supplies/{standard_id}", response_model=ApiResponse)
 async def deactivate_supply(standard_id: str, _: None = admin_dep, db=Depends(get_db)):

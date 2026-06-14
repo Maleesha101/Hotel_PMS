@@ -2,9 +2,9 @@
 
 # revision identifiers, used by Alembic.
 revision = "0003"
- down_revision = "0002"
- branch_labels = None
- depends_on = None
+down_revision = "0002"
+branch_labels = None
+depends_on = None
 
 from alembic import op
 import sqlalchemy as sa
@@ -19,7 +19,7 @@ def upgrade() -> None:
         sa.Column("category", sa.String(length=100), nullable=False),
         sa.Column("quantity", sa.SmallInteger(), nullable=False, server_default="1"),
         sa.Column("unit", sa.String(length=30)),
-        sa.Column("is_active", sa.Boolean(), nullable=False, server_default=sa.text("TRUE")),
+        sa.Column("is_active", sa.Boolean(), nullable=False, server_default="true"),
         sa.Column("notes", sa.Text()),
         sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("NOW()"), nullable=False),
         sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.text("NOW()"), nullable=False),

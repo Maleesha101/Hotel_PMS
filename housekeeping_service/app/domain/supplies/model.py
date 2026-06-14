@@ -4,6 +4,7 @@ import uuid
 from sqlalchemy import Column, String, Text, SmallInteger, Boolean, UniqueConstraint
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.sql import func
+from sqlalchemy import DateTime
 from app.models import Base
 
 class RoomSupplyStandardModel(Base):
@@ -15,8 +16,8 @@ class RoomSupplyStandardModel(Base):
     category = Column(String(100), nullable=False)
     quantity = Column(SmallInteger, nullable=False, server_default="1")
     unit = Column(String(30))
-    is_active = Column(Boolean, nullable=False, server_default=func.true())
+    is_active = Column(Boolean, nullable=False, server_default="true")
     notes = Column(Text)
-    created_at = Column("created_at", func.now(), nullable=False)
-    updated_at = Column("updated_at", func.now(), nullable=False)
+    created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now())
     __table_args__ = (UniqueConstraint("room_type", "item_name", name="uq_room_type_item_name"),)

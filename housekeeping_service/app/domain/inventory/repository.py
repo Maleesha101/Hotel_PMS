@@ -45,9 +45,10 @@ async def list_items(
     return result.scalars().all()
 
 async def update_item(db: AsyncSession, item_id: str, **fields) -> InventoryItemModel:
-    await db.execute(update(InventoryItemModel).where(InventoryItemModel.id == item_id).values(**fields))
+    stmt = update(InventoryItemModel).where(InventoryItemModel.id == item_id).values(**fields).returning(InventoryItemModel)
+    result = await db.execute(stmt)
     await db.flush()
-    return await get_item(db, item_id)
+    return result.scalar_one_or_none()
 
 # -------------------- Inventory Transaction Helpers --------------------
 
@@ -63,23 +64,33 @@ async def create_transaction(
     notes: Optional[str] = None,
 ) -> InventoryTransactionModel:
     # Fetch current balance
-    item = await get_item(db, item_id)
-    if not item:
-        raise ValueError("Inventory item not found")
-    # Compute new balance based on type
+    # Update item quantity atomically to prevent race conditions
+    # and use RETURNING to get the updated balance
     if transaction_type == TransactionType.ADD:
-        new_balance = item.available_qty + quantity
+        qty_change = quantity
     else:
-        # ISSUE or others decrease stock
-        new_balance = item.available_qty - quantity
-        if new_balance < 0:
-            raise ValueError("Insufficient stock for transaction")
-    # Update item quantity
-    await db.execute(update(InventoryItemModel).where(InventoryItemModel.id == item_id).values(available_qty=new_balance))
+        qty_change = -quantity
+
+    stmt = (
+        update(InventoryItemModel)
+        .where(InventoryItemModel.id == item_id)
+        .values(available_qty=InventoryItemModel.available_qty + qty_change)
+        .returning(InventoryItemModel.available_qty)
+    )
+    
+    # For ISSUES, ensure we don't go below zero
+    if transaction_type != TransactionType.ADD:
+        stmt = stmt.where(InventoryItemModel.available_qty >= quantity)
+
+    result = await db.execute(stmt)
+    new_balance = result.scalar()
+    
+    if new_balance is None:
+        raise ValueError("Transaction failed: Item not found or insufficient stock")
 
     tx = InventoryTransactionModel(
         item_id=item_id,
-        transaction_type=transaction_type.value,
+        transaction_type=transaction_type,
         quantity=quantity,
         balance_after=new_balance,
         room_id=room_id,
@@ -127,10 +138,10 @@ async def summary_by_category(db: AsyncSession) -> List[Dict]:
     rows = result.all()
     return [
         {
-            "category": r[0],
+            "category": r[0].value if hasattr(r[0], 'value') else str(r[0]),
             "total_items": r[1],
             "total_value": float(r[2] or 0),
-            "low_stock_count": r[3] or 0,
+            "low_stock_count": int(r[3] or 0),
         }
         for r in rows
     ]
