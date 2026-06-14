@@ -6,6 +6,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import com.hotelpms.maintenance.domain.schedule.MaintenanceSchedule;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
@@ -17,5 +18,7 @@ import java.util.UUID;
 public interface MaintenanceScheduleRepository extends JpaRepository<MaintenanceSchedule, UUID> {
     Page<MaintenanceSchedule> findByEquipmentId(UUID equipmentId, Pageable pageable);
     List<MaintenanceSchedule> findByNextDueDateBeforeAndStatus(Date date, ScheduleStatus status);
+    // Added pageable version for upcoming queries
+    Page<MaintenanceSchedule> findByNextDueDateBeforeAndStatus(Date date, ScheduleStatus status, Pageable pageable);
     Page<MaintenanceSchedule> findByStatus(ScheduleStatus status, Pageable pageable);
 }

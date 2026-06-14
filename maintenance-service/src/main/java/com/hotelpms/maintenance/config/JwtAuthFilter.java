@@ -3,7 +3,6 @@ package com.hotelpms.maintenance.config;
 import com.hotelpms.maintenance.shared.exception.InvalidStateException;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.security.Keys;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -19,8 +18,11 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.security.Key;
+import java.security.KeyFactory;
+import java.security.NoSuchAlgorithmException;
+import java.security.PublicKey;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.X509EncodedKeySpec;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -38,6 +40,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     private String publicKeyPem;
 
     private static final String BEARER_PREFIX = "Bearer ";
+    private volatile PublicKey cachedPublicKey;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -49,6 +52,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                 String token = header.substring(BEARER_PREFIX.length());
                 Claims claims = parseToken(token);
                 String subject = claims.getSubject();
+                @SuppressWarnings("unchecked")
                 List<String> roles = claims.get("roles", List.class);
                 List<SimpleGrantedAuthority> authorities = roles != null ?
                         roles.stream().map(r -> new SimpleGrantedAuthority("ROLE_" + r)).collect(Collectors.toList())
@@ -65,19 +69,36 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     }
 
     private Claims parseToken(String token) {
-        if (!StringUtils.hasText(publicKeyPem)) {
+        if (!StringUtils.hasText(publicKeyPem)) { // Ensure public key is configured
             throw new InvalidStateException("JWT public key is not configured");
         }
-        // Remove PEM header/footer and whitespace
-        String cleaned = publicKeyPem
-                .replaceAll("-----BEGIN PUBLIC KEY-----", "")
-                .replaceAll("-----END PUBLIC KEY-----", "")
-                .replaceAll("\\s", "");
-        byte[] keyBytes = java.util.Base64.getDecoder().decode(cleaned);
-        Key key = Keys.hmacShaKeyFor(keyBytes); // Using HMAC for simplicity – in real RS256 use RSA public key
-        // For RS256 we would use Keys.rsaPublicKey(...), but to avoid extra dependencies we validate signature loosely.
+
+        if (cachedPublicKey == null) { // Cache the public key to avoid re-parsing on every request
+            synchronized (this) {
+                if (cachedPublicKey == null) {
+                    try {
+                        // Remove PEM header/footer and whitespace
+                        String cleaned = publicKeyPem
+                                .replaceAll("-----BEGIN PUBLIC KEY-----", "")
+                                .replaceAll("-----END PUBLIC KEY-----", "")
+                                .replaceAll("\\s", "");
+                        byte[] keyBytes = java.util.Base64.getDecoder().decode(cleaned);
+                        
+                        // Create RSA public key from bytes
+                        KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+                        X509EncodedKeySpec keySpec = new X509EncodedKeySpec(keyBytes);
+                        cachedPublicKey = keyFactory.generatePublic(keySpec);
+                    } catch (NoSuchAlgorithmException e) {
+                throw new InvalidStateException("RSA algorithm not found for public key parsing");
+                    } catch (InvalidKeySpecException e) {
+                throw new InvalidStateException("Invalid public key spec for RSA public key parsing. Ensure it's a valid X.509 PEM format.");
+                    }
+                }
+            }
+        }
+        
         return Jwts.parserBuilder()
-                .setSigningKey(key)
+                .setSigningKey(cachedPublicKey) // Use the actual RSA public key here
                 .build()
                 .parseClaimsJws(token)
                 .getBody();
