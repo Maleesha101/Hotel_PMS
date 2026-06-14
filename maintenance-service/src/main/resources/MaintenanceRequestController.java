@@ -126,5 +126,15 @@ public class MaintenanceRequestController {
                 MaintenanceStatus.WAITING_FOR_PARTS
         );
         Page<MaintenanceRequest> entities = requestService.repository.findByRoomIdAndStatusIn(roomId, openStatuses, pageable);
-}
+        Page<MaintenanceRequestResponse> responses = entities.map(mapper::toResponse);
+        PagedResponse<MaintenanceRequestResponse> pageDto = new PagedResponse<>(
+                responses.getContent(),
+                responses.getNumber(),
+                responses.getSize(),
+                responses.getTotalElements(),
+                responses.getTotalPages(),
+                responses.isLast()
+        );
+        return ResponseEntity.ok(new ApiResponse<>(200, "Open requests for room retrieved", pageDto));
+    }
 }

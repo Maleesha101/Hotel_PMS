@@ -44,7 +44,7 @@ public class SecurityConfig {
             // Authorize requests
             .authorizeHttpRequests(auth -> auth
                 // Swagger UI – only enabled in dev profile
-                .requestMatchers("/swagger-ui.html/**", "/v3/api-docs/**").access((authz, context) -> {
+                    .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").access((authz, context) -> {
                     if ("prod".equalsIgnoreCase(activeProfile)) {
                         return authz.denyAll();
                     }
